@@ -1,0 +1,144 @@
+select *
+into #10thGradeMathGPA
+from (
+SELECT *
+FROM OPENQUERY (campus,'SELECT p.studentNumber AS StudentNumber6,
+CONVERT(decimal(6,3), sum(coalesce(t.gpaWeight,1)*coalesce(t.gpavalue,0))/SUM(coalesce(t.gpaweight,1))) as [10thGradeMathGPA2015]
+,CONVERT(decimal(6,3), (sum(coalesce(t.gpaWeight,1)*coalesce(t.gpavalue,0))/SUM(coalesce(t.gpaweight,1))) + SUM(coalesce(t.gpaweight,1)*coalesce(t.bonuspoints,0))) as [10thGradeMathGPABonus2015]
+FROM [clark].[dbo].[TranscriptCourse] t
+JOIN clark.dbo.Person p
+	ON t.personid = p.personid
+JOIN clark.dbo.transcriptcredit tc
+	ON t.transcriptid = tc.transcriptid
+--Only  math subjects.
+Join (
+  select distinct crs.number  -- , crs.coresubject 
+    from clark.[dbo].[Course] crs  
+    INNER JOIN clark.dbo.calendar  cal on cal.calendarID = crs.calendarID
+    INNER JOIN clark.dbo.school  sch  on sch.schoolID = cal.schoolID 
+  where sch.number = ''000'' --District Level Courses
+  --Math Courses
+    and  crs.scedSubjectArea = ''02''
+	) mat on mat.number = t.courseNumber
+WHERE 1 = 1
+AND coalesce(t.repeatCourse,0) = 0 
+	--AND t.personid = 52297
+	--and t.endYear<2016
+--2016-2016 School Year
+	and t.endYear=2015
+--11th Graders
+	and t.grade=''10''
+	and t.grade<>''NM''
+	--AND t.endyear < 2016
+	--AND cs.NAME = ''Mathematics''
+	--and crs.coreSubject=''MAT''
+	group by p.studentNumber
+	having sum(t.gpaWeight)>0')) a
+
+select *
+into #10thGradeCumGPA
+from (
+select *
+from OPENQUERY (campus, 'SELECT p.studentNumber,
+CONVERT(decimal(6,3), sum(coalesce(t.gpaWeight,1)*coalesce(t.gpavalue,0))/SUM(coalesce(t.gpaweight,1))) as [10thGradeCumGPA2015]
+,CONVERT(decimal(6,3), (sum(coalesce(t.gpaWeight,1)*coalesce(t.gpavalue,0))/SUM(coalesce(t.gpaweight,1))) + SUM(coalesce(t.gpaweight,1)*coalesce(t.bonuspoints,0))) as [10thGradeCumGPABonus2015]
+FROM [clark].[dbo].[TranscriptCourse] t
+JOIN clark.dbo.Person p
+	ON t.personid = p.personid
+JOIN clark.dbo.transcriptcredit tc
+	ON t.transcriptid = tc.transcriptid
+--Only  math subjects.
+WHERE 1 = 1
+AND coalesce(t.repeatCourse,0) = 0 
+	--AND t.personid = 52297
+	--and t.endYear<2016
+--2015-2015 School Year
+	and t.endYear=2015
+--11th Graders
+	and t.grade=''10''
+	and t.grade<>''NM''
+	--AND t.endyear < 2016
+	--AND cs.NAME = ''Mathematics''
+	--and crs.coreSubject=''MAT''
+	group by p.studentNumber
+	having sum(t.gpaWeight)>0')) b 
+
+select *
+into #11thGradeMathGPA
+from (
+SELECT *
+FROM OPENQUERY (campus,'SELECT p.studentNumber AS StudentNumber6,
+CONVERT(decimal(6,3), sum(coalesce(t.gpaWeight,1)*coalesce(t.gpavalue,0))/SUM(coalesce(t.gpaweight,1))) as [11thGradeMathGPA2015]
+,CONVERT(decimal(6,3), (sum(coalesce(t.gpaWeight,1)*coalesce(t.gpavalue,0))/SUM(coalesce(t.gpaweight,1))) + SUM(coalesce(t.gpaweight,1)*coalesce(t.bonuspoints,0))) as [11thGradeMathGPABonus2015]
+FROM [clark].[dbo].[TranscriptCourse] t
+JOIN clark.dbo.Person p
+	ON t.personid = p.personid
+JOIN clark.dbo.transcriptcredit tc
+	ON t.transcriptid = tc.transcriptid
+--Only  math subjects.
+Join (
+  select distinct crs.number  -- , crs.coresubject 
+    from clark.[dbo].[Course] crs  
+    INNER JOIN clark.dbo.calendar  cal on cal.calendarID = crs.calendarID
+    INNER JOIN clark.dbo.school  sch  on sch.schoolID = cal.schoolID 
+  where sch.number = ''000'' --District Level Courses
+  --Math Courses
+    and  crs.scedSubjectArea = ''02''
+	) mat on mat.number = t.courseNumber
+WHERE 1 = 1
+AND coalesce(t.repeatCourse,0) = 0 
+	--AND t.personid = 52297
+	--and t.endYear<2016
+--2016-2016 School Year
+	and t.endYear=2015
+--11th Graders
+	and t.grade=''11''
+	and t.grade<>''NM''
+	--AND t.endyear < 2016
+	--AND cs.NAME = ''Mathematics''
+	--and crs.coreSubject=''MAT''
+	group by p.studentNumber
+	having sum(t.gpaWeight)>0')) a
+
+select *
+into #11thGradeCumGPA
+from (
+select *
+from OPENQUERY (campus, 'SELECT p.studentNumber,
+CONVERT(decimal(6,3), sum(coalesce(t.gpaWeight,1)*coalesce(t.gpavalue,0))/SUM(coalesce(t.gpaweight,1))) as [11thGradeCumGPA2015]
+,CONVERT(decimal(6,3), (sum(coalesce(t.gpaWeight,1)*coalesce(t.gpavalue,0))/SUM(coalesce(t.gpaweight,1))) + SUM(coalesce(t.gpaweight,1)*coalesce(t.bonuspoints,0))) as [11thGradeCumGPABonus2015]
+FROM [clark].[dbo].[TranscriptCourse] t
+JOIN clark.dbo.Person p
+	ON t.personid = p.personid
+JOIN clark.dbo.transcriptcredit tc
+	ON t.transcriptid = tc.transcriptid
+--Only  math subjects.
+WHERE 1 = 1
+AND coalesce(t.repeatCourse,0) = 0 
+	--AND t.personid = 52297
+	--and t.endYear<2016
+--2015-2015 School Year
+	and t.endYear=2015
+--11th Graders
+	and t.grade=''11''
+	and t.grade<>''NM''
+	--AND t.endyear < 2016
+	--AND cs.NAME = ''Mathematics''
+	--and crs.coreSubject=''MAT''
+	group by p.studentNumber
+	having sum(t.gpaWeight)>0')) b 
+
+select *
+from AARSI.Accountability.EdReady a
+left outer join #10thGradeCumGPA c10
+on a.StudentNumber2015 = c.studentnumber
+left outer join #10thGradeMathGPA m10
+on a.StudentNumber2015 = m.studentnumber6
+left outer join #11thGradeCumGPA c11
+on a.StudentNumber2015=c11.studentnumber
+left outer join #11thGradeMathGPA m11
+on a.StudentNumber2015=m11.studentnumber6
+
+
+
+
