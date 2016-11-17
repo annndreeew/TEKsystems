@@ -1,0 +1,109 @@
+--=========== Create Verify table to validate data ===================================================================================--
+
+IF OBJECT_ID('tempdb.dbo.#Verify', 'U') IS NOT NULL
+	DROP TABLE #Verify;
+
+SELECT row_number() OVER (
+		PARTITION BY studentnumber ORDER BY entrydatefulldate DESC
+			,enrollmentsnapshotdatefulldate DESC
+		) rownum
+	,f.ServiceTypeCode
+	,CASE 
+		WHEN f.GradeLevelCode < '10'
+			THEN right(f.gradeLevelCode, 1)
+		ELSE f.GradeLevelCode
+		END AS CorrectGradeLevel
+	,f.EducationOrganizationStateID AS CorrectStateID
+	,f.EducationOrganizationShortName AS SchooName
+	,f.StudentGenderCode AS CorrectGender
+	,f.StudentEthnicityCode AS CorrectEthnicity
+	,CASE WHEN f.IEPIndicator = 'IEP' THEN 1 ELSE 0 END AS CorrectIEP
+	,f.EducationOrganizationShortName
+	,r.*
+INTO #Verify
+FROM (
+	SELECT ServiceTypeCode
+		,StudentFirstName
+		,StudentLastName
+		,StudentNumber
+		,SchoolYear
+		,StudentDateOfBirth
+		,StudentEthnicityCode
+		,StudentGenderCode
+		,LEPIndicator
+		,IEPIndicator
+		,IEPEntryDate
+		,IEPExitDate
+		,FRLIndicator
+		,EnrollmentSnapshotDateFullDate
+		,EducationOrganizationStateID
+		,EducationOrganizationShortName
+		,GradeLevelCode
+		,EntryDateFullDate
+		,ExitDateFullDate
+	FROM sdm.dbo.FactStudentEnrollmentSnapshotCombined
+	) f
+INNER JOIN EOC_2016_raw r ON f.StudentNumber = r.CORRECT_STUDENTID
+WHERE f.EnrollmentSnapshotDateFullDate <= '2016-05-20'
+	AND SchoolYear = '2016'
+	AND GradeLevelCode <> 'AD'
+	AND ServiceTypeCode = 'P'
+
+--Find and update Ethnicities that don't match. 204 rows, 208 updated=========================================================================================================--
+
+SELECT *
+FROM dbo.EOC_2016_Raw r
+INNER JOIN #Verify v ON r.CORRECT_STUDENTID = v.CORRECT_STUDENTID
+WHERE v.Ethnicity <> v.CorrectEthnicity AND v.rownum = 1 AND v.CorrectStateID = v.[School Code]
+
+UPDATE r
+SET CORRECT_ETHNICITY = CONVERT(nvarchar(1), v.CorrectEthnicity)
+FROM dbo.EOC_2016_Raw r
+INNER JOIN #Verify v ON r.CORRECT_STUDENTID = v.CORRECT_STUDENTID
+WHERE v.[IEP status] <> v.CorrectIEP AND v.rownum = 1 AND v.CorrectStateID = v.[School Code]
+
+--Find and update IEP Statuses that don't match. 561 rows, 568 updated ========================================================================================================--
+
+SELECT *
+FROM dbo.EOC_2016_Raw r
+INNER JOIN #Verify v ON r.CORRECT_STUDENTID = v.CORRECT_STUDENTID
+WHERE v.[IEP status] <> v.CorrectIEP AND v.rownum = 1 AND v.CorrectStateID = v.[School Code]
+
+UPDATE r
+SET CORRECT_IEPSTATUS = CONVERT(nvarchar(2), v.CorrectIEP)
+FROM dbo.EOC_2016_Raw r
+INNER JOIN #Verify v ON r.CORRECT_STUDENTID = v.CORRECT_STUDENTID
+WHERE v.[IEP status] <> v.CorrectIEP AND v.rownum = 1 AND v.CorrectStateID = v.[School Code]
+
+--Find and update Genders that don't match. 10 rows ========================================================================================================--
+
+SELECT *
+FROM dbo.EOC_2016_Raw r
+INNER JOIN #Verify v ON r.CORRECT_STUDENTID = v.CORRECT_STUDENTID
+WHERE v.Gender <> v.CorrectGender AND v.rownum = 1 AND v.CorrectStateID = v.[School Code]
+
+UPDATE r
+SET CORRECT_GENDER = CONVERT(nvarchar(2), v.CorrectGender)
+FROM dbo.EOC_2016_Raw r
+INNER JOIN #Verify v ON r.CORRECT_STUDENTID = v.CORRECT_STUDENTID
+WHERE v.Gender <> v.CorrectGender AND v.rownum = 1 AND v.CorrectStateID = v.[School Code]
+
+--Find and update Grade levels that don't match. 384 rows ========================================================================================================--
+
+SELECT *
+FROM dbo.EOC_2016_Raw r
+INNER JOIN #Verify v ON r.CORRECT_STUDENTID = v.CORRECT_STUDENTID
+WHERE CAST(v.[Grade Level] AS nvarchar(4)) <> v.CorrectGradeLevel AND v.rownum = 1 AND v.CorrectStateID = v.[School Code]
+
+UPDATE r
+SET CORRECT_GRADELEVEL = CONVERT(nvarchar(4), v.CorrectGradeLevel)
+FROM dbo.EOC_2016_Raw r
+INNER JOIN #Verify v ON r.CORRECT_STUDENTID = v.CORRECT_STUDENTID
+WHERE CAST(v.[Grade Level] AS nvarchar(4)) <> v.CorrectGradeLevel AND v.rownum = 1 AND v.CorrectStateID = v.[School Code]
+
+--Find and update School codes that don't match. 418 rows, 462 updated ========================================================================================================--
+
+SELECT *
+FROM dbo.EOC_2016_Raw r
+INNER JOIN #Verify v ON r.CORRECT_STUDENTID = v.CORRECT_STUDENTID
+WHERE CAST(v.[School Code] AS nvarchar(20)) <> v.CorrectStateID AND v.rownum = 1 
