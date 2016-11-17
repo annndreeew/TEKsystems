@@ -1,0 +1,91 @@
+-- Select data needed to pivot
+SELECT [StudentNumber]
+	,[Test Number Opening Test Date]
+	,CASE 
+		WHEN (d.[Test Number Opening Test Date] LIKE 'A%')
+			THEN 'Fall'
+		WHEN (d.[Test Number Opening Test Date] LIKE 'B%')
+			THEN 'Winter'
+		ELSE 'Spring'
+		END + ' ' + d.[Class Name] AS 'Class Name'
+	,[Scale Score]
+FROM Accountability.Discovery_1415_LanguageArts d
+
+-- Select distinct Class Names to determine columns needed for pivot
+SELECT DISTINCT CASE 
+		WHEN (d.[Test Number Opening Test Date] LIKE 'A%')
+			THEN 'Fall'
+		WHEN (d.[Test Number Opening Test Date] LIKE 'B%')
+			THEN 'Winter'
+		ELSE 'Spring'
+		END + ' ' + d.[Class Name] AS 'Class Name'
+FROM Accountability.Discovery_1415_LanguageArts d
+
+-- Create temp table to house data
+DROP #Discoverydata
+CREATE TABLE #Discoverydata (
+	[Student Number] INT
+	,[Test Number Opening Test Data] VARCHAR(100)
+	,[Class Name] VARCHAR(100)
+	,[Scale Score] VARCHAR(100)
+	)
+
+-- Insert test scores needed into temp table
+INSERT INTO #Discoverydata (
+	[Student Number]
+	,[Test Number Opening Test Data]
+	,[Class Name]
+	,[Scale Score]
+	)
+SELECT [StudentNumber]
+	,[Test Number Opening Test Date]
+	,CASE 
+		WHEN (d.[Test Number Opening Test Date] LIKE 'A%')
+			THEN 'Fall'
+		WHEN (d.[Test Number Opening Test Date] LIKE 'B%')
+			THEN 'Winter'
+		ELSE 'Spring'
+		END + ' ' + d.[Class Name] AS 'Class Name'
+	,[Scale Score]
+FROM AARSI.Accountability.Discovery_1415_LanguageArts d
+
+
+-- Pivot to show AssessmentTitle as field, StudentUSI and Result as rows. *Max is used* 
+drop accountability.Discovery_1415_Results
+SELECT *
+INTO accountability.Discovery_1415_Results
+FROM (
+	SELECT [Student Number]
+		,[Scale Score]
+		,[Class Name]
+	FROM #Discoverydata
+	) prepivot
+PIVOT(MAX([Scale Score]) FOR [Class Name] IN (
+	  [Fall Grade 1 Reading/Language Arts Pool]
+	, [Fall Grade 2 Reading/Language Arts Pool]
+	, [Fall Grade 3 Reading/Language Arts Pool]
+	, [Fall Grade 4 Reading/Language Arts Pool]
+	, [Fall Grade 5 Reading/Language Arts Pool]
+	, [Fall Grade 6 Reading/Language Arts Pool]
+	, [Fall Grade 7 Reading/Language Arts Pool]
+	, [Fall Grade 8 Reading/Language Arts Pool]
+	, [Fall Grade K Reading/Language Arts Pool]
+	, [Spring Grade 1 Reading/Language Arts Pool]
+	, [Spring Grade 2 Reading/Language Arts Pool]
+	, [Spring Grade 3 Reading/Language Arts Pool]
+	, [Spring Grade 4 Reading/Language Arts Pool]
+	, [Spring Grade 5 Reading/Language Arts Pool]
+	, [Spring Grade 6 Reading/Language Arts Pool]
+	, [Spring Grade 7 Reading/Language Arts Pool]
+	, [Spring Grade 8 Reading/Language Arts Pool]
+	, [Spring Grade K Reading/Language Arts Pool]
+	, [Winter Grade 1 Reading/Language Arts Pool]
+	, [Winter Grade 2 Reading/Language Arts Pool]
+	, [Winter Grade 3 Reading/Language Arts Pool]
+	, [Winter Grade 4 Reading/Language Arts Pool]
+	, [Winter Grade 5 Reading/Language Arts Pool]
+	, [Winter Grade 6 Reading/Language Arts Pool]
+	, [Winter Grade 7 Reading/Language Arts Pool]
+	, [Winter Grade 8 Reading/Language Arts Pool]
+	, [Winter Grade K Reading/Language Arts Pool]
+	)) AS PivotTable
